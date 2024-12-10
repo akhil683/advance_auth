@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { registerHandler } from "../controllers/auth.controller";
+import { loginHandler, registerHandler } from "../controllers/auth.controller";
 
 export const authRoutes = Router()
 
-authRoutes.post("/register", registerHandler)
-
 //prefix: /auth
+authRoutes.post("/register", registerHandler)
+authRoutes.post("/login", loginHandler)
