@@ -2,8 +2,10 @@ import { CREATED, OK } from "../constants/http";
 import { createAccount, loginUser } from "../services/auth.service";
 import catchErrors from "../utils/catchErrors";
 import { z } from "zod";
-import { setAuthCookies } from "../utils/cookies";
+import { clearAuthCookies, setAuthCookies } from "../utils/cookies";
 import { loginSchema, registerSchema } from "./auth.schemas";
+import { verifyToken } from "../utils/jwt";
+import SessionModel from "../models/session.model";
 
 export const registerHandler = catchErrors(
   async (req, res) => {
@@ -38,3 +40,23 @@ export const loginHandler = catchErrors(
       })
 
   })
+
+export const logoutHandler = catchErrors(
+  async (req, res) => {
+    //Get the accessToken
+    const accessToken = req.cookies.accessToken
+
+    //Verify the token
+    const { payload } = verifyToken(accessToken)
+
+    //Delete the session
+    if (payload) {
+      await SessionModel.findByIdAndDelete(payload.sessionId)
+    }
+
+    // clear cookies
+    return clearAuthCookies(res).status(OK).json({
+      message: "Logout successfull"
+    })
+  }
+)

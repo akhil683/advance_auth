@@ -1,4 +1,4 @@
-import jwt, { SignOptions } from "jsonwebtoken"
+import jwt, { SignOptions, VerifyOptions } from "jsonwebtoken"
 import { SessionDocument } from "../models/session.model"
 import { UserDocument } from "../models/user.model"
 import { JWT_SECRET, JWT_REFRESH_TOKEN } from "../constants/env"
@@ -36,4 +36,29 @@ export const signToken = (
     ...defaults,
     ...signOpts
   })
+}
+
+export const verifyToken = <TPayload extends object = AccessTokenPayload>(
+  token: string,
+  options?: VerifyOptions & {
+    secret: string
+  }
+) => {
+  //TODO: const { secret = JWT_SECRET, ...verifyOpts } = options || {}
+  const { secret = "mysecretkey", ...verifyOpts } = options || {}
+  try {
+    const payload = jwt.verify(
+      token, secret, {
+      ...defaults,
+      ...verifyOpts
+    }) as TPayload
+
+    return {
+      payload
+    }
+  } catch (error: any) {
+    return {
+      error: error.message
+    }
+  }
 }
