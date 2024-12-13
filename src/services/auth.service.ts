@@ -5,9 +5,9 @@ import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
 import VerificationCodeModel from "../models/verificationCode.model";
 import appAssert from "../utils/AppAssert";
-import { oneYearFromNow } from "../utils/date";
+import { ONE_DAY_MS, oneYearFromNow, thirtyDaysFromNow } from "../utils/date";
 import jwt from "jsonwebtoken"
-import { RefreshTokenSignOptions, signToken } from "../utils/jwt";
+import { RefreshTokenPayload, RefreshTokenSignOptions, signToken, verifyToken } from "../utils/jwt";
 
 export type createAccountParams = {
   email: string;
@@ -108,3 +108,42 @@ export const loginUser = async ({ email, password, userAgent }: LoginParams) => 
   }
 }
 
+export const refreshUserAccessToken = async (refreshToken: string) => {
+  const { payload } = verifyToken<RefreshTokenPayload>(refreshToken, {
+    secret: RefreshTokenSignOptions.secret
+  })
+  appAssert(payload, UNAUTHORIZED, "Invalid refresh token")
+
+  const session = await SessionModel.findById(payload.sessionId)
+  const now = Date.now()
+  appAssert(
+    session && session.expiresAt.getTime() > now,
+    UNAUTHORIZED,
+    "Session expired"
+  )
+  //refresh the session if it expires in the next 24 hours
+  //user login at 29th day last hour and whil using our application, 
+  //it suddely logouts at 30th day. To prevent that
+
+  const sessionNeedsRefresh = session.expiresAt.getTime() - now <= ONE_DAY_MS
+  if (sessionNeedsRefresh) {
+    session.expiresAt = thirtyDaysFromNow()
+    await session.save()
+  }
+
+  //New refreshToken with  updated expiresAt
+  const newRefreshToken = sessionNeedsRefresh
+    ? signToken({
+      sessionId: session._id,
+    },
+      RefreshTokenSignOptions
+    )
+    : undefined
+
+  const accessToken = signToken({
+    userId: session.userId,
+    sessionId: session._id
+  })
+
+  return { accessToken, newRefreshToken }
+}
