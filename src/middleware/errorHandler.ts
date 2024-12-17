@@ -30,6 +30,7 @@ const errorHandler: ErrorRequestHandler = (
 ) => {
   console.log(`PATH: ${req.path}`, error)
 
+  //Clear auth cookie when any error occur in this path
   if (req.path === REFRESH_PATH) {
     clearAuthCookies(res)
   }
