@@ -7,6 +7,8 @@ import cookieParser from "cookie-parser";
 import errorHandler from "./middleware/errorHandler";
 import { OK } from "./constants/http";
 import { authRoutes } from "./routes/auth.route";
+import authenticate from "./middleware/authenticate";
+import { userRoutes } from "./routes/user.route";
 
 
 const app = express()
@@ -29,7 +31,11 @@ app.get("/",
   }
 )
 
+//Auth Routes
 app.use("/auth", authRoutes)
+
+// Protected Routes
+app.use("/user", authenticate, userRoutes)
 
 //Error handler middleware
 app.use(errorHandler)
