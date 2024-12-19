@@ -9,6 +9,7 @@ import { OK } from "./constants/http";
 import { authRoutes } from "./routes/auth.route";
 import authenticate from "./middleware/authenticate";
 import { userRoutes } from "./routes/user.route";
+import { sessionRoutes } from "./routes/session.route";
 
 
 const app = express()
@@ -24,7 +25,7 @@ app.use(
 app.use(cookieParser())
 
 app.get("/",
-  (req, res: any, next) => {
+  (_, res: any) => {
     return res.status(OK).json({
       status: "healthy",
     })
@@ -36,6 +37,7 @@ app.use("/auth", authRoutes)
 
 // Protected Routes
 app.use("/user", authenticate, userRoutes)
+app.use("/sessions", authenticate, sessionRoutes)
 
 //Error handler middleware
 app.use(errorHandler)
